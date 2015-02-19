@@ -25,8 +25,14 @@ if Meteor.isClient
          return fBound
 
    share.setup_resumable = () ->
+      url = "#{@baseURL}/_resumable"
+
+      # export `ROOT_URL=<server hostname>` so that cordova knows where to connect to
+      url = Meteor.absoluteUrl(url)  if Meteor.isCordova
+      console.log(Meteor.absoluteUrl(url));
+
       r = new Resumable
-         target: "#{@baseURL}/_resumable"
+         target: url
          generateUniqueIdentifier: (file) -> "#{new Meteor.Collection.ObjectID()}"
          fileParameterName: 'file'
          chunkSize: @chunkSize

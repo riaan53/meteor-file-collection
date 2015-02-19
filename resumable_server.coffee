@@ -13,6 +13,9 @@ if Meteor.isServer
    dicer = Npm.require 'dicer'
    async = Npm.require 'async'
 
+   # Add this to all response headers to allow CORS for cordova with origin http://meteor.local
+   allowCORSCordova = 'Access-Control-Allow-Origin': 'http://meteor.local';
+
    # This function checks to see if all of the parts of a Resumable.js uploaded file are now in the gridFS
    # Collection. If so, it completes the file by moving all of the chunks to the correct file and cleans up
 
@@ -207,7 +210,7 @@ if Meteor.isServer
             fileStream.pipe(writeStream)
                .on 'close', share.bind_env((retFile) =>
                   if retFile
-                     res.writeHead(200)
+                     res.writeHead(200, allowCORSCordova)
                      res.end()
                      # Check to see if all of the parts are now available and can be reassembled
                      check_order.bind(@)(file, (err) ->
@@ -251,9 +254,14 @@ if Meteor.isServer
          return
 
       # All is good
-      res.writeHead(200)
+      res.writeHead(200, allowCORSCordova)
       res.end()
 
+   # If cross-origin request the browser may requset a options before get/post to see if server allow CORS
+   resumable_options = (req, res, next) ->
+      # Send CORS header with 200 response code
+      res.writeHead(200, allowCORSCordova)
+      res.end()
 
    # Setup the GET and POST HTTP REST paths for Resumable.js in express
    share.setup_resumable = () ->
@@ -261,6 +269,7 @@ if Meteor.isServer
 	    r.route('/_resumable')
 	       .get(resumable_get.bind(@))
 	       .post(resumable_post.bind(@))
+           .options(resumable_options.bind(@))
 	       .all((req, res, next) ->
 	          res.writeHead(500)
 	          res.end())

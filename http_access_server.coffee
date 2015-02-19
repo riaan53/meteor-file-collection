@@ -13,6 +13,9 @@ if Meteor.isServer
    gridLocks = Npm.require 'gridfs-locks'
    dicer = Npm.require 'dicer'
 
+   # Add this to all response headers to allow CORS for cordova with origin http://meteor.local
+   allowCORSCordova = 'Access-Control-Allow-Origin': 'http://meteor.local';
+
    # Fast MIME Multipart parsing of generic HTTP POST request bodies
 
    dice_multipart = (req, callback) ->
@@ -74,7 +77,7 @@ if Meteor.isServer
             fileStream.pipe(stream)
                .on 'close', (retFile) ->
                   if retFile
-                     res.writeHead(200)
+                     res.writeHead(200, allowCORSCordova)
                      res.end()
                .on 'error', (err) ->
                   res.writeHead(500)
@@ -115,6 +118,7 @@ if Meteor.isServer
             'Content-type': req.gridFS.contentType
             'Content-Length': chunksize
             'Last-Modified': req.gridFS.uploadDate.toUTCString()
+            'Access-Control-Allow-Origin': 'http://meteor.local'
 
         # Read the partial request from gridfs stream
         stream = @findOneStream(
@@ -136,6 +140,7 @@ if Meteor.isServer
             'Content-MD5': req.gridFS.md5
             'Content-Length': req.gridFS.length
             'Last-Modified': req.gridFS.uploadDate.toUTCString()
+            'Access-Control-Allow-Origin': 'http://meteor.local';
 
         # Open file to stream
         stream = @findOneStream { _id: req.gridFS._id }
@@ -186,7 +191,7 @@ if Meteor.isServer
          req.pipe(stream)
             .on 'close', (retFile) ->
                if retFile
-                  res.writeHead(200)
+                  res.writeHead(200, allowCORSCordova)
                   res.end()
             .on 'error', (err) ->
                res.writeHead(500)
